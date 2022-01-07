@@ -1,5 +1,6 @@
 package com.example.myapplicationchats.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
@@ -7,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.myapplicationchats.adapter.UserAdapter;
 import com.example.myapplicationchats.databinding.ActivityUsersBinding;
+import com.example.myapplicationchats.listeners.UserListeners;
 import com.example.myapplicationchats.models.User;
 import com.example.myapplicationchats.utilities.Constants;
 import com.example.myapplicationchats.utilities.PreferenceManager;
@@ -16,7 +18,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UsersActivity extends AppCompatActivity {
+public class UsersActivity extends AppCompatActivity implements UserListeners {
 
     private ActivityUsersBinding binding;
 
@@ -34,9 +36,9 @@ public class UsersActivity extends AppCompatActivity {
 
     }
 
-    private  void  setListeners(){
+    private void setListeners() {
 
-        binding.imageBack.setOnClickListener(v-> onBackPressed());
+        binding.imageBack.setOnClickListener(v -> onBackPressed());
     }
 
     private void getUser() {
@@ -50,28 +52,28 @@ public class UsersActivity extends AppCompatActivity {
                     if (task.isSuccessful() && task.getResult() != null) {
                         List<User> users = new ArrayList<>();
                         for (QueryDocumentSnapshot queryDocumentSnapshot : task.getResult()) {
-                            if(currentUserId.equals(queryDocumentSnapshot.getId())){
+                            if (currentUserId.equals(queryDocumentSnapshot.getId())) {
                                 continue;
                             }
                             User user = new User();
-                            user.name =queryDocumentSnapshot.getString(Constants.KEY_NAME);
+                            user.name = queryDocumentSnapshot.getString(Constants.KEY_NAME);
                             user.email = queryDocumentSnapshot.getString(Constants.KEY_EMAIL);
                             user.image = queryDocumentSnapshot.getString(Constants.KEY_IMAGE);
                             user.token = queryDocumentSnapshot.getString(Constants.KEY_FCM_TOKEN);
                             users.add(user);
 
                         }
-                        if(users.size()>0){
-                            UserAdapter userAdapter = new UserAdapter(users);
+                        if (users.size() > 0) {
+                            UserAdapter userAdapter = new UserAdapter(users, this);
                             binding.userRecyclerView.setAdapter(userAdapter);
                             binding.userRecyclerView.setVisibility(View.VISIBLE);
 
-                        }else {
+                        } else {
 
                             showErrorMessage();
 
                         }
-                    }else {
+                    } else {
 
                         showErrorMessage();
                     }
@@ -93,5 +95,13 @@ public class UsersActivity extends AppCompatActivity {
         } else {
             binding.progressBar.setVisibility(View.INVISIBLE);
         }
+    }
+
+    @Override
+    public void onUserClicked(User user) {
+        Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
+        intent.putExtra(Constants.KEY_USER, user);
+        startActivity(intent);
+        finish();
     }
 }
